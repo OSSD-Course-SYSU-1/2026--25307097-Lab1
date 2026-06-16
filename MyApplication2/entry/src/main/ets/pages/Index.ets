@@ -11,6 +11,13 @@ struct Index {
   @State diaryCount: number = 0
   @State moodStats: string = ''
   @State diaryContent: string = ''
+  @State tabletConnected: boolean = false
+  @State watchConnected: boolean = false
+  @State syncStatus: string = '未同步'
+  @State isFlowing: boolean = false
+  @State flowTarget: string = ''
+  @State flowHistory: string[] = []
+  @State selectedBackground: number = 0
 
   build() {
     Column() {
@@ -23,8 +30,9 @@ struct Index {
         Column() {
           Text('写日记')
             .fontColor(this.currentTab === 0 ? '#0A59F7' : '#666666')
+            .fontSize(12)
         }
-        .width('33%')
+        .width('20%')
         .height(50)
         .justifyContent(FlexAlign.Center)
         .onClick(() => {
@@ -34,8 +42,9 @@ struct Index {
         Column() {
           Text('日记列表')
             .fontColor(this.currentTab === 1 ? '#0A59F7' : '#666666')
+            .fontSize(12)
         }
-        .width('33%')
+        .width('20%')
         .height(50)
         .justifyContent(FlexAlign.Center)
         .onClick(() => {
@@ -46,12 +55,37 @@ struct Index {
         Column() {
           Text('心情推荐')
             .fontColor(this.currentTab === 2 ? '#0A59F7' : '#666666')
+            .fontSize(12)
         }
-        .width('33%')
+        .width('20%')
         .height(50)
         .justifyContent(FlexAlign.Center)
         .onClick(() => {
           this.currentTab = 2
+        })
+
+        Column() {
+          Text('设备管理')
+            .fontColor(this.currentTab === 3 ? '#0A59F7' : '#666666')
+            .fontSize(12)
+        }
+        .width('20%')
+        .height(50)
+        .justifyContent(FlexAlign.Center)
+        .onClick(() => {
+          this.currentTab = 3
+        })
+
+        Column() {
+          Text('设置')
+            .fontColor(this.currentTab === 4 ? '#0A59F7' : '#666666')
+            .fontSize(12)
+        }
+        .width('20%')
+        .height(50)
+        .justifyContent(FlexAlign.Center)
+        .onClick(() => {
+          this.currentTab = 4
         })
       }
       .width('100%')
@@ -267,9 +301,445 @@ struct Index {
         .width('100%')
         .layoutWeight(1)
       }
+
+      if (this.currentTab === 3) {
+        Column() {
+          Text('设备管理')
+            .fontSize(20)
+            .fontWeight(FontWeight.Bold)
+            .margin({ top: 20, bottom: 20 })
+
+          Column() {
+            Text('📱 当前设备')
+              .fontSize(16)
+              .fontWeight(FontWeight.Bold)
+              .margin({ bottom: 12 })
+
+            Row() {
+              Column() {
+                Text('手机')
+                  .fontSize(14)
+                  .fontWeight(FontWeight.Medium)
+                Text('在线')
+                  .fontSize(12)
+                  .fontColor('#4CAF50')
+                  .margin({ top: 4 })
+              }
+              .alignItems(HorizontalAlign.Start)
+              .layoutWeight(1)
+
+              Text('✓')
+                .fontSize(20)
+                .fontColor('#4CAF50')
+            }
+            .width('100%')
+            .padding(16)
+            .backgroundColor('#F5F5F5')
+            .borderRadius(12)
+          }
+          .width('90%')
+          .margin({ bottom: 24 })
+
+          Column() {
+            Text('🔍 可用设备')
+              .fontSize(16)
+              .fontWeight(FontWeight.Bold)
+              .margin({ bottom: 12 })
+
+            Row() {
+              Column() {
+                Text('平板')
+                  .fontSize(14)
+                  .fontWeight(FontWeight.Medium)
+                Text(this.tabletConnected ? '已连接' : '未连接')
+                  .fontSize(12)
+                  .fontColor(this.tabletConnected ? '#4CAF50' : '#999999')
+                  .margin({ top: 4 })
+              }
+              .alignItems(HorizontalAlign.Start)
+              .layoutWeight(1)
+
+              Button(this.tabletConnected ? '断开' : '连接')
+                .fontSize(12)
+                .width(60)
+                .height(30)
+                .backgroundColor(this.tabletConnected ? '#FF5722' : '#0A59F7')
+                .onClick(() => {
+                  this.tabletConnected = !this.tabletConnected
+                  this.updateSyncStatus()
+                })
+            }
+            .width('100%')
+            .padding(16)
+            .backgroundColor('#F5F5F5')
+            .borderRadius(12)
+            .margin({ bottom: 12 })
+
+            Row() {
+              Column() {
+                Text('手表')
+                  .fontSize(14)
+                  .fontWeight(FontWeight.Medium)
+                Text(this.watchConnected ? '已连接' : '未连接')
+                  .fontSize(12)
+                  .fontColor(this.watchConnected ? '#4CAF50' : '#999999')
+                  .margin({ top: 4 })
+              }
+              .alignItems(HorizontalAlign.Start)
+              .layoutWeight(1)
+
+              Button(this.watchConnected ? '断开' : '连接')
+                .fontSize(12)
+                .width(60)
+                .height(30)
+                .backgroundColor(this.watchConnected ? '#FF5722' : '#0A59F7')
+                .onClick(() => {
+                  this.watchConnected = !this.watchConnected
+                  this.updateSyncStatus()
+                })
+            }
+            .width('100%')
+            .padding(16)
+            .backgroundColor('#F5F5F5')
+            .borderRadius(12)
+          }
+          .width('90%')
+
+          Column() {
+            Text('📊 数据同步')
+              .fontSize(16)
+              .fontWeight(FontWeight.Bold)
+              .margin({ bottom: 12 })
+
+            Row() {
+              Text('同步状态：')
+                .fontSize(14)
+              Text(this.syncStatus)
+                .fontSize(14)
+                .fontColor(this.syncStatus === '已同步' ? '#4CAF50' : '#999999')
+            }
+            .width('100%')
+            .margin({ bottom: 12 })
+
+            Button('立即同步')
+              .width('100%')
+              .height(40)
+              .enabled(this.tabletConnected || this.watchConnected)
+              .onClick(() => {
+                this.syncData()
+              })
+          }
+          .width('90%')
+          .padding(16)
+          .backgroundColor('#F5F5F5')
+          .borderRadius(12)
+          .margin({ top: 20 })
+
+          Column() {
+            Text('🔄 界面流转')
+              .fontSize(16)
+              .fontWeight(FontWeight.Bold)
+              .margin({ bottom: 12 })
+
+            Text('将当前界面流转到其他设备')
+              .fontSize(12)
+              .fontColor('#666666')
+              .margin({ bottom: 12 })
+
+            Row() {
+              Column() {
+                Text('流转到平板')
+                  .fontSize(14)
+              }
+              .width('45%')
+              .height(60)
+              .justifyContent(FlexAlign.Center)
+              .backgroundColor(this.tabletConnected ? '#E3F2FD' : '#F5F5F5')
+              .borderRadius(8)
+              .onClick(() => {
+                if (this.tabletConnected) {
+                  this.flowTo('平板')
+                }
+              })
+
+              Column() {
+                Text('流转到手表')
+                  .fontSize(14)
+              }
+              .width('45%')
+              .height(60)
+              .justifyContent(FlexAlign.Center)
+              .backgroundColor(this.watchConnected ? '#E3F2FD' : '#F5F5F5')
+              .borderRadius(8)
+              .onClick(() => {
+                if (this.watchConnected) {
+                  this.flowTo('手表')
+                }
+              })
+            }
+            .width('100%')
+            .justifyContent(FlexAlign.SpaceBetween)
+
+            if (this.isFlowing) {
+              Text('正在流转到 ' + this.flowTarget + '...')
+                .fontSize(12)
+                .fontColor('#0A59F7')
+                .margin({ top: 12 })
+            }
+          }
+          .width('90%')
+          .padding(16)
+          .backgroundColor('#F5F5F5')
+          .borderRadius(12)
+          .margin({ top: 20 })
+
+          if (this.flowHistory.length > 0) {
+            Column() {
+              Text('📋 流转历史')
+                .fontSize(16)
+                .fontWeight(FontWeight.Bold)
+                .margin({ bottom: 12 })
+
+              Column() {
+                ForEach(this.flowHistory, (record: string) => {
+                  Text(record)
+                    .fontSize(12)
+                    .fontColor('#666666')
+                    .margin({ bottom: 8 })
+                })
+              }
+              .width('100%')
+            }
+            .width('90%')
+            .padding(16)
+            .backgroundColor('#F5F5F5')
+            .borderRadius(12)
+            .margin({ top: 20 })
+          }
+
+          Text('💡 提示：连接设备后可以实现数据同步和无缝流转')
+            .fontSize(12)
+            .fontColor('#999999')
+            .margin({ top: 20 })
+            .width('90%')
+        }
+        .width('100%')
+        .layoutWeight(1)
+      }
+
+      if (this.currentTab === 4) {
+        Column() {
+          Text('个性化设置')
+            .fontSize(20)
+            .fontWeight(FontWeight.Bold)
+            .margin({ top: 20, bottom: 20 })
+
+          Column() {
+            Text('🎨 背景颜色')
+              .fontSize(16)
+              .fontWeight(FontWeight.Bold)
+              .margin({ bottom: 16 })
+
+            Text('选择您喜欢的背景颜色')
+              .fontSize(12)
+              .fontColor('#666666')
+              .margin({ bottom: 20 })
+
+            Row() {
+              Column() {
+                Column() {
+                  Text('')
+                }
+                .width(40)
+                .height(40)
+                .backgroundColor('#FFFFFF')
+                .borderRadius(8)
+                .border({ width: 2, color: this.selectedBackground === 0 ? '#0A59F7' : '#E0E0E0' })
+
+                Text('默认')
+                  .fontSize(10)
+                  .fontColor('#666666')
+                  .margin({ top: 4 })
+              }
+              .onClick(() => {
+                this.selectedBackground = 0
+              })
+
+              Column() {
+                Column() {
+                  Text('')
+                }
+                .width(40)
+                .height(40)
+                .backgroundColor('#E3F2FD')
+                .borderRadius(8)
+                .border({ width: 2, color: this.selectedBackground === 1 ? '#0A59F7' : '#E0E0E0' })
+
+                Text('淡蓝')
+                  .fontSize(10)
+                  .fontColor('#666666')
+                  .margin({ top: 4 })
+              }
+              .onClick(() => {
+                this.selectedBackground = 1
+              })
+
+              Column() {
+                Column() {
+                  Text('')
+                }
+                .width(40)
+                .height(40)
+                .backgroundColor('#FCE4EC')
+                .borderRadius(8)
+                .border({ width: 2, color: this.selectedBackground === 2 ? '#0A59F7' : '#E0E0E0' })
+
+                Text('淡粉')
+                  .fontSize(10)
+                  .fontColor('#666666')
+                  .margin({ top: 4 })
+              }
+              .onClick(() => {
+                this.selectedBackground = 2
+              })
+
+              Column() {
+                Column() {
+                  Text('')
+                }
+                .width(40)
+                .height(40)
+                .backgroundColor('#E8F5E9')
+                .borderRadius(8)
+                .border({ width: 2, color: this.selectedBackground === 3 ? '#0A59F7' : '#E0E0E0' })
+
+                Text('淡绿')
+                  .fontSize(10)
+                  .fontColor('#666666')
+                  .margin({ top: 4 })
+              }
+              .onClick(() => {
+                this.selectedBackground = 3
+              })
+            }
+            .width('100%')
+            .justifyContent(FlexAlign.SpaceEvenly)
+
+            Row() {
+              Column() {
+                Column() {
+                  Text('')
+                }
+                .width(40)
+                .height(40)
+                .backgroundColor('#FFF9C4')
+                .borderRadius(8)
+                .border({ width: 2, color: this.selectedBackground === 4 ? '#0A59F7' : '#E0E0E0' })
+
+                Text('淡黄')
+                  .fontSize(10)
+                  .fontColor('#666666')
+                  .margin({ top: 4 })
+              }
+              .onClick(() => {
+                this.selectedBackground = 4
+              })
+
+              Column() {
+                Column() {
+                  Text('')
+                }
+                .width(40)
+                .height(40)
+                .backgroundColor('#F3E5F5')
+                .borderRadius(8)
+                .border({ width: 2, color: this.selectedBackground === 5 ? '#0A59F7' : '#E0E0E0' })
+
+                Text('淡紫')
+                  .fontSize(10)
+                  .fontColor('#666666')
+                  .margin({ top: 4 })
+              }
+              .onClick(() => {
+                this.selectedBackground = 5
+              })
+
+              Column() {
+                Column() {
+                  Text('')
+                }
+                .width(40)
+                .height(40)
+                .backgroundColor('#FFF3E0')
+                .borderRadius(8)
+                .border({ width: 2, color: this.selectedBackground === 6 ? '#0A59F7' : '#E0E0E0' })
+
+                Text('淡橙')
+                  .fontSize(10)
+                  .fontColor('#666666')
+                  .margin({ top: 4 })
+              }
+              .onClick(() => {
+                this.selectedBackground = 6
+              })
+
+              Column() {
+                Column() {
+                  Text('')
+                }
+                .width(40)
+                .height(40)
+                .backgroundColor('#E0F7FA')
+                .borderRadius(8)
+                .border({ width: 2, color: this.selectedBackground === 7 ? '#0A59F7' : '#E0E0E0' })
+
+                Text('淡青')
+                  .fontSize(10)
+                  .fontColor('#666666')
+                  .margin({ top: 4 })
+              }
+              .onClick(() => {
+                this.selectedBackground = 7
+              })
+            }
+            .width('100%')
+            .justifyContent(FlexAlign.SpaceEvenly)
+            .margin({ top: 12 })
+          }
+          .width('90%')
+          .padding(16)
+          .backgroundColor('#F5F5F5')
+          .borderRadius(12)
+
+          Column() {
+            Text('📋 当前选择')
+              .fontSize(16)
+              .fontWeight(FontWeight.Bold)
+              .margin({ bottom: 12 })
+
+            Text(this.getBackgroundName())
+              .fontSize(14)
+              .fontColor('#666666')
+          }
+          .width('90%')
+          .padding(16)
+          .backgroundColor('#F5F5F5')
+          .borderRadius(12)
+          .margin({ top: 20 })
+
+          Text('💡 提示：背景颜色将应用到整个应用')
+            .fontSize(12)
+            .fontColor('#999999')
+            .margin({ top: 20 })
+            .width('90%')
+        }
+        .width('100%')
+        .layoutWeight(1)
+      }
     }
     .width('100%')
     .height('100%')
+    .backgroundColor(this.getBackgroundColor())
   }
 
   saveDiary() {
@@ -362,5 +832,83 @@ struct Index {
     
     this.aiRecommendation = recommendation
     this.isLoading = false
+  }
+
+  updateSyncStatus() {
+    if (this.tabletConnected || this.watchConnected) {
+      this.syncStatus = '待同步'
+    } else {
+      this.syncStatus = '未同步'
+    }
+  }
+
+  syncData() {
+    if (this.diaryCount === 0) {
+      this.syncStatus = '无数据'
+      return
+    }
+    
+    this.syncStatus = '同步中...'
+    
+    let deviceCount = 0
+    if (this.tabletConnected) {
+      deviceCount = deviceCount + 1
+    }
+    if (this.watchConnected) {
+      deviceCount = deviceCount + 1
+    }
+    
+    this.syncStatus = '已同步 ' + this.diaryCount + ' 条日记到 ' + deviceCount + ' 台设备'
+  }
+
+  flowTo(device: string) {
+    this.isFlowing = true
+    this.flowTarget = device
+
+    let now = new Date()
+    let time = now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds()
+    let tabName = ''
+    
+    if (this.currentTab === 0) {
+      tabName = '写日记'
+    } else if (this.currentTab === 1) {
+      tabName = '日记列表'
+    } else if (this.currentTab === 2) {
+      tabName = '心情推荐'
+    } else {
+      tabName = '设备管理'
+    }
+
+    let record = '📅 ' + time + ' | 流转到' + device + ' | 页面：' + tabName
+    this.flowHistory.unshift(record)
+
+    if (this.flowHistory.length > 5) {
+      this.flowHistory.pop()
+    }
+
+    this.isFlowing = false
+    this.flowTarget = ''
+  }
+
+  getBackgroundColor(): string {
+    if (this.selectedBackground === 0) return '#FFFFFF'
+    if (this.selectedBackground === 1) return '#E3F2FD'
+    if (this.selectedBackground === 2) return '#FCE4EC'
+    if (this.selectedBackground === 3) return '#E8F5E9'
+    if (this.selectedBackground === 4) return '#FFF9C4'
+    if (this.selectedBackground === 5) return '#F3E5F5'
+    if (this.selectedBackground === 6) return '#FFF3E0'
+    return '#E0F7FA'
+  }
+
+  getBackgroundName(): string {
+    if (this.selectedBackground === 0) return '默认白色'
+    if (this.selectedBackground === 1) return '淡蓝色'
+    if (this.selectedBackground === 2) return '淡粉色'
+    if (this.selectedBackground === 3) return '淡绿色'
+    if (this.selectedBackground === 4) return '淡黄色'
+    if (this.selectedBackground === 5) return '淡紫色'
+    if (this.selectedBackground === 6) return '淡橙色'
+    return '淡青色'
   }
 }
